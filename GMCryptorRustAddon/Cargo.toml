@@ -1,0 +1,23 @@
+[package]
+name = "rustaddon"
+version = "0.1.0"
+license = "ISC"
+edition = "2018"
+exclude = ["index.node"]
+
+[lib]
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hex = "0.4"
+getrandom = "0.2.3"
+openssl="0.10.36"
+openssl-sys = "0.9.67"
+libc = "0.2.93"
+
+[dependencies.neon]
+version = "0.9"
+default-features = false
+features = ["napi-6"]

@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>GMCryptor</title>
+</head>
+
+<body>
+	<script src="wasm_exec.js"></script>
+	<script>
+		if (!WebAssembly.instantiateStreaming) {
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+		const go = new Go();
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("GMCryptor.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+			inst = result.instance;
+			document.getElementById("testBtn").disabled = false;
+			(async function () {
+				console.clear()
+				const run = go.run(inst)
+			})();
+		});
+
+		function test() {
+			var testString = "{name: \"Seahigh DX\", nick: \"Seahigh DX\"}";
+			var sm4_md5_key = "996ce17f6abc9fe126b57aa5f1d8c92c"
+			var sm4_md5_iv = "504f1a1f80d40c760c74bd5257124dc9"
+			console.log("sm3Hash", goCryptorWasm.sm3Hash(testString))
+			console.log("sm4EcbEncrypt", goCryptorWasm.sm4EcbEncrypt(testString, sm4_md5_key))
+			console.log("sm4CbcEncrypt", goCryptorWasm.sm4CbcEncrypt(testString, sm4_md5_key,sm4_md5_iv))
+		}
+	</script>
+
+
+	<button onClick="test();" id="testBtn" disabled>Test</button>
+</body>
+
+</html>

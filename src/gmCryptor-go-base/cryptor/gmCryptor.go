@@ -26,8 +26,10 @@ func SM2Encrypt(plainText string, publicKey string, mode int) string {
 	}
 	curve := sm2.P256Sm2()
 	x, y := elliptic.Unmarshal(curve, pubKeyBytes)
+	if x == nil || y == nil {
+		return ""
+	}
 	pubKey := &sm2.PublicKey{Curve: curve, X: x, Y: y}
-
 	cipherTextBytes, err := sm2.Encrypt(pubKey, plainTextBytes, rand.Reader, mode)
 	if err != nil {
 		return ""
@@ -45,8 +47,10 @@ func SM2EncryptAsn1(plainText string, publicKey string) string {
 	}
 	curve := sm2.P256Sm2()
 	x, y := elliptic.Unmarshal(curve, pubKeyBytes)
+	if x == nil || y == nil {
+		return ""
+	}
 	pubKey := &sm2.PublicKey{Curve: curve, X: x, Y: y}
-
 	cipherTextBytes, err := pubKey.EncryptAsn1(plainTextBytes, rand.Reader) //sm2加密
 	if err != nil {
 		return ""

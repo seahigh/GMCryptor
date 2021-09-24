@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>GMCryptor</title>
+</head>
+
+<body>
+	<script src="wasm_exec.js"></script>
+	<script>
+		if (!WebAssembly.instantiateStreaming) {
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+		const go = new Go();
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("../release/gmCryptor-go-libs/gmCryptor-go-wasm.wasm"), go.importObject).then((
+			result) => {
+			mod = result.module;
+			inst = result.instance;
+			document.getElementById("testBtn").disabled = false;
+			(async function () {
+				console.clear()
+				const run = go.run(inst)
+			})();
+		});
+		
+		function test() {
+			var testString = "{name: \"Seahigh DX\", nick: \"Seahigh DX\"}";
+			var sm4_md5_key = "996ce17f6abc9fe126b57aa5f1d8c92c";
+			var sm4_md5_iv = "504f1a1f80d40c760c74bd5257124dc9";
+
+			var sm2PublicKey =
+				"047184D28EF2A558F13A730F75F380C3744ED9A8433DFA1F0AFE1BAADA0E18588223D7A249173DDE03FD25FF65C9EE0BD3F17E861171664504CD6B21BA80E32505";
+			var sm2PrivateKey = "0CD190D5FFBC3F9D808AAF6145D010F06D7726F6B65C6127AB121C9D379A2941";
+			console.log("sm3Hash", goCryptorWasm.sm3Hash(testString))
+			console.log("sm4EcbEncrypt", goCryptorWasm.sm4EcbEncrypt(testString, sm4_md5_key));
+			console.log("sm4EcbDecrypt", goCryptorWasm.sm4EcbDecrypt(goCryptorWasm.sm4EcbEncrypt(testString, sm4_md5_key),
+				sm4_md5_key));
+			console.log("sm4CbcEncrypt", goCryptorWasm.sm4CbcEncrypt(testString, sm4_md5_key, sm4_md5_iv))
+			console.log("sm4CbcDecrypt", goCryptorWasm.sm4CbcEncrypt(goCryptorWasm.sm4CbcEncrypt(testString, sm4_md5_key,
+				sm4_md5_iv), sm4_md5_key, sm4_md5_iv));
+			console.log("SM2[Asn1]加密", goCryptorWasm.sm2EncryptAsn1(testString, sm2PublicKey));
+			console.log("SM2[Asn1]解密", goCryptorWasm.sm2DecryptAsn1(goCryptorWasm.sm2EncryptAsn1(testString, sm2PublicKey),
+				sm2PrivateKey));
+			console.log("SM2[C1C3C2]加密", goCryptorWasm.sm2Encrypt(testString, sm2PublicKey, 0));
+
+			console.log("SM2[C1C3C2]解密", goCryptorWasm.sm2Decrypt(goCryptorWasm.sm2Encrypt(testString, sm2PublicKey, 0), sm2PrivateKey, 0));
+
+
+			console.log("SM2[C1C2C3]加密", goCryptorWasm.sm2Encrypt(testString, sm2PublicKey, 1));
+			console.log("SM2[C1C2C3]解密", goCryptorWasm.sm2Decrypt(goCryptorWasm.sm2Encrypt(testString, sm2PublicKey, 1), sm2PrivateKey, 1));
+
+			console.log("SM2加签", goCryptorWasm.sm2Signature(testString, sm2PrivateKey));
+			console.log("SM2验签", goCryptorWasm.sm2VerifySign(testString, goCryptorWasm.sm2Signature(testString,
+				sm2PrivateKey), sm2PublicKey));
+		}
+	</script>
+
+	需通过网页服务访问，不能直接local打开html
+	<button onClick="test();" id="testBtn" disabled>Test</button>
+</body>
+
+</html>

@@ -1,0 +1,1 @@
+emcc -O3 wasm.cpp -std=c++11 libcrypto-wasm.a libssl-wasm.a libbotan-2-wasm.a -I ./include -s WASM=1 -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall"]' -o gmCryptor-c-wasm.js && cp gmCryptor*.js ../../release/gmCryptor-c-wasm/index.js && cp *.wasm ../../release/gmCryptor-c-wasm/

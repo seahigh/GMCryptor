@@ -1,0 +1,1 @@
+cp gmCryptor-demo.go ../src/gmCryptor-go-base/ && cd ../src/gmCryptor-go-base/ && go run gmCryptor-demo.go && rm gmCryptor-demo.go

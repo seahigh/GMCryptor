@@ -1,0 +1,1 @@
+gomobile bind -target=android -o ../../release/gmCryptor-go-mobile/ ./mobile

@@ -1,0 +1,20 @@
+{
+  "name": "rustaddon",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+
+    "build:darwin:x64": "cargo-cp-artifact -nc gmCryptor-rust-addon-darwin-x64.node -- cargo build --message-format=json-render-diagnostics",
+    "build:darwin:arm64": "cargo-cp-artifact -nc gmCryptor-rust-addon-darwin-arm64.node -- cargo build --message-format=json-render-diagnostics",
+    "build": "cargo-cp-artifact -nc gmCryptor-rust-addon.node -- cargo build --message-format=json-render-diagnostics",
+    "build-debug": "npm run build --",
+    "build-release": "node -e \"process.exit(require('os').platform()+require('os').arch() === 'darwinx64' ? 0 : 1)\" && npm run build:darwin:x64 -- --release || (node -e \"process.exit(require('os').platform()+require('os').arch() === 'darwinarm64' ? 0 : 1)\" && npm run build:darwin:arm64 -- --release)",
+    "install": "npm run build-release",
+    "test": "cargo test"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cargo-cp-artifact": "^0.1"
+  }
+}

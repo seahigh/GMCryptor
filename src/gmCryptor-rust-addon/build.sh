@@ -1,0 +1,1 @@
+rm *.node && rm ../../release/gmCryptor-rust-addon/*.node && npm i && cp *.node *.js ../../release/gmCryptor-rust-addon/

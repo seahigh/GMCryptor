@@ -1,0 +1,1 @@
+wasm-pack build --release --target nodejs && cp ./pkg/*.* *.js ../../release/gmCryptor-rust-wasm/

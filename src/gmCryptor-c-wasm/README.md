@@ -22,7 +22,7 @@ CXX=em++ ./configure.py --cc=clang --cpu=llvm --os=emscripten
 
 make
 
-## 编译
+## 直接编译
 
 sh build.sh
 

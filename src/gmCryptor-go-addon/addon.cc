@@ -1,7 +1,7 @@
 #include <node.h>
 #include <nan.h>
 #include <stdbool.h>
-#include "../../libs/gmCryptor-go-libs/gmCryptor-go.h"
+#include "../../release/gmCryptor-go-libs/gmCryptor-go.h"
 
 using v8::Boolean;
 using v8::FunctionCallbackInfo;

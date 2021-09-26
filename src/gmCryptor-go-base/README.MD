@@ -1,11 +1,13 @@
-MACOS (intel/M1 跨平台交叉编译)：
+## MACOS (intel/M1 跨平台交叉编译)：
 
-brew install mingw-w64
+#### 准备：
 
-brew tap messense/macos-cross-toolchains
+- brew install mingw-w64
 
-brew install x86_64-unknown-linux-gnu
+- brew tap messense/macos-cross-toolchains
 
-brew install aarch64-unknown-linux-gnu
+- brew install x86_64-unknown-linux-gnu
 
-brew install zstd
+- brew install aarch64-unknown-linux-gnu
+
+- brew install zstd

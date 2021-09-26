@@ -2,23 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <botan/hex.h>
-#include <botan/botan.h>
 #include <openssl/evp.h>
 #include <emscripten.h>
-#include <botan/sm2.h>
 #include <iostream>
-
-#include <botan/auto_rng.h>
-#include <botan/pubkey.h>
-
-#define CERTVRIFY_SM2_ID "1234567812345678"
-#define CERTVRIFY_SM2_ID_LEN sizeof(CERTVRIFY_SM2_ID) - 1
-#define SM2_ENCRYPT_C1C2C3 1
-#define SM2_ENCRYPT_C1C3C2 0
-
+ 
 using namespace std;
-using namespace Botan;
 
 static char *to_hex(const void *_s, size_t l)
 {
@@ -37,62 +25,6 @@ static char *to_hex(const void *_s, size_t l)
 
 int main()
 {
-  // std::string sig_text("{name: \"Seahigh DX\", nick: \"Seahigh DX\"}");
-  // std::vector<uint8_t> data(text.data(),text.data()+text.length());
-  // Botan::EC_Group ecgrp("sm2p256v1");
-
-  // std::string pubkey_s = "04B01614EBC1F3660B4E23BFDD959080974D26EBF6A9240FBAD160B2430BBCA0C137597155455F39A78570A39E967A879909150D09DDE44D4326FBA850512D3031";
-  // std::string signature_s = "1C8B7F50C5B0BA81A9BD105315B876E10EE32FA9AF8429FD8E7F9496325ED9C0841A4F76D88D464D22F74C5512932840329CEA566CCE899DA7E9414B626E5E5D";
-
-  // Botan::PointGFp pub_p = ecgrp.OS2ECP(Botan::hex_decode(pubkey_s));
-
-  // Botan::SM2_PublicKey pub_k(ecgrp,pub_p);
-
-  // Botan::PK_Verifier pkVerifier(pub_k,"EMSA1(SM3)");
-  // pkVerifier.update(data);
-
-  // int re = pkVerifier.check_signature(Botan::hex_decode(signature_s));
-  // std::cout << "is " << (re? "valid\n" : "invalid\n") << std::endl;
-
-  // printf("%d\n", re);
-
-  //   Botan::AutoSeeded_RNG rng;
-  //   // Generate ECDSA keypair
-  //   //Botan::ECDSA_PrivateKey key(rng, Botan::EC_Group("sm2p256v1"));
-  //   Botan::SM2_PrivateKey key(rng,Botan::EC_Group("sm2p256v1"));
-
-  //   std::cout <<  "sm2 sign: " << sig_text << std::endl;
-  //   std::string text = sig_text;
-  //   std::vector<uint8_t> data(text.data(),text.data()+text.length());
-
-  //   std::cout << "pubkey:" << std::endl << Botan::hex_encode(key.public_key_bits()) << std::endl;
-  //   std::cout << "prikey:" << std::endl << Botan::hex_encode(key.private_key_bits()) << std::endl;
-
-  //   // sign data
-  //   Botan::PK_Signer signer(key, rng, "userid,SM3");
-  //   signer.update(data);
-
-  //   std::vector<uint8_t> signature = signer.signature(rng);
-  //   std::cout << "Signature:" << std::endl << Botan::hex_encode(signature);
-
-  //   // verify signature
-
-  //   Botan::PK_Verifier verifier(key, "userid,SM3");
-  //   verifier.update(data);
-  //   std::cout << std::endl << "verify sig is " << (verifier.check_signature(signature)? "valid" : "invalid");
-
-  //  string plaintext = "{name: \"Seahigh DX\", nick: \"Seahigh DX\"}";
-
-  //  Botan::InitializationVector IV("504f1a1f80d40c760c74bd5257124dc9");
-  //  Botan::SymmetricKey key("996ce17f6abc9fe126b57aa5f1d8c92c");
-  //  Botan::Pipe pipe(Botan::get_cipher("SM4/CBC", key, IV, Botan::ENCRYPTION), new Botan::Hex_Encoder);
-  //  pipe.process_msg(plaintext);
-  //  std::string str = pipe.read_all_as_string(0);
-  //  std::cout << "SM4 CBC: " << str << std::endl;
-  std::string plaintext("Your great-grandfather gave this watch to your granddad for good luck. Unfortunately, Dane's luck wasn't as good as his old man's.");
-  // std::vector<uint8_t> pt(plaintext.data(), plaintext.data() + plaintext.length());
-  // std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-
   return 0;
 }
 

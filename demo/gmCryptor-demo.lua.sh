@@ -1,1 +1,1 @@
-luajit gmCryptor-demo.lua
+luajit gmCryptor-demo-go.lua && luajit gmCryptor-demo-openssl.lua

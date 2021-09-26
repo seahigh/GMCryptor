@@ -28,4 +28,4 @@ sh build.sh
 
 
 
-#### *OPENSSL的SM2无法正常通过Emscripten编译运行，估换Botan来实现，待完成...*
+#### *OPENSSL的SM2无法正常通过Emscripten编译运行，待选择其他方案来完成...*

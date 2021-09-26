@@ -5,6 +5,7 @@ var sm4 = require('sm-crypto').sm4;
 var crypto = require('crypto');
 var ffi = require('ffi-napi');
 var os = require('os');
+ 
 var rustCryptorWasm = require('../release/gmCryptor-rust-wasm/.')
 var rustCryptorAddon = require('../release/gmCryptor-rust-addon/.')
 var goCryptorAddon = require('../release/gmCryptor-go-addon/.')
@@ -39,11 +40,11 @@ function doFn(fnName, fn) {
       fn.apply(this, myArgs.slice(2, myArgs.length));
     }
   }
-  var endStr = "";
+  var endStr = "[0位]";
   if (String(enc.length) != "undefined") {
     endStr = "[" + enc.length + "位]"
   }
-  console.log(fnName + endStr, new Date().getTime() - dtNow, enc)
+  console.log((fnName + endStr).padEnd(25), new Date().getTime() - dtNow, enc)
   return enc;
 }
 
@@ -135,16 +136,16 @@ doFn('SM2[Asn1]解密', libGMCryptor.sm2DecryptAsn1, sm2EncAsn1, sm2PrivateKey)
 var sm2Sign = doFn('SM2加签', libGMCryptor.sm2Signature, testString, sm2PrivateKey)
 doFn('SM2验签', libGMCryptor.sm2VerifySign, testString, sm2Sign, sm2PublicKey)
 
-console.log("NODE(纯JS) 测试" + count + "次=================================================(慢就一个字，SM4还行可以用用)");
+console.log("NODE(纯JS) 测试" + count + "次=================================================(慢就一个字，SM4还行可以用用，C1CxCx模式0和1和其他相反，加密结果比其他前两位少04，对齐需注意)");
 
 doFn('SM3摘要', sm3, testString)
 var sm4Enc = doFn('SM4[ECB]加密', sm4.encrypt, testString, sm4_md5_key)
 doFn('SM4[ECB]解密', sm4.decrypt, sm4Enc, sm4_md5_key)
-var sm4Enc = doFn('SM4[CBC]加密', sm4.encrypt, testString, sm4_md5_key, { mode: 'cbc', iv: sm4_md5_iv })
-doFn('SM4[CBC]解密', sm4.decrypt, sm4Enc, sm4_md5_key, { mode: 'cbc', iv: sm4_md5_iv })
-var sm2Enc = doFn('SM2[C1C3C2]加密', sm2.doEncrypt, testString, sm2PublicKey, 1)
+var sm4Enc = doFn('SM4[CBC]加密', sm4.encrypt, testString, sm4_md5_key, { mode: 'cbc', iv: sm4_md5_iv });
+doFn('SM4[CBC]解密', sm4.decrypt, sm4Enc, sm4_md5_key, { mode: 'cbc', iv: sm4_md5_iv });
+var sm2Enc = doFn('SM2[C1C3C2]加密', sm2.doEncrypt, testString, sm2PublicKey, 1);
 doFn('SM2[C1C3C2]解密', sm2.doDecrypt, sm2Enc, sm2PrivateKey, 1);
-var sm2Enc = doFn('SM2[C1C2C3]加密', sm2.doEncrypt, testString, sm2PublicKey, 0) //模式0和1和其他相反，加密结果比其他前两位少04，对齐需注意
+var sm2Enc = doFn('SM2[C1C2C3]加密', sm2.doEncrypt, testString, sm2PublicKey, 0) 
 doFn('SM2[C1C2C3]解密', sm2.doDecrypt, sm2Enc, sm2PrivateKey, 0);
 var sm2Sign = doFn('SM2加签', sm2.doSignature, testString, sm2PrivateKey, {
   der: true,
@@ -232,7 +233,6 @@ cCryptorWasm.onRuntimeInitialized = () => {
   doFn('SM4[ECB]解密', cCryptorWasm.sm4EcbDecrypt, sm4Enc, sm4_md5_key)
   var sm4Enc = doFn('SM4[CBC]加密', cCryptorWasm.sm4CbcEncrypt, testString, sm4_md5_key, sm4_md5_iv)
   doFn('SM4[CBC]解密', cCryptorWasm.sm4CbcDecrypt, sm4Enc, sm4_md5_key, sm4_md5_iv)
-  var sm2Sign = doFn('SM2加签', cCryptorWasm.sm2Signature, testString, sm2PrivateKey)
 }
 
 function doMemoryTest(type) {

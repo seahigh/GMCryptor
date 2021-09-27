@@ -15,17 +15,16 @@ extern "C"
 {
 
 #include <crypto/sm3.h>
-
-  unsigned char *sm3Hash(const unsigned char *message, size_t *out_len);
-  unsigned char *sm4EcbEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, size_t *out_len);
-  unsigned char *sm4EcbDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, size_t *out_len);
-  unsigned char *sm4CbcEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
-  unsigned char *sm4CbcDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
-  unsigned char *sm2Encrypt(const unsigned char *plain_text, const unsigned char *pub_hex, const int mode, size_t *out_len);
-  unsigned char *sm2Decrypt(const unsigned char *cipher_hex, const unsigned char *pri_hex, const int mode, size_t *out_len);
-  unsigned char *sm2EncryptAsn1(const unsigned char *plain_text, const unsigned char *pub_hex, size_t *out_len);
-  unsigned char *sm2DecryptAsn1(const unsigned char *cipher_hex, const unsigned char *pri_hex, size_t *out_len);
-  unsigned char *sm2Signature(const unsigned char *message, const unsigned char *pri_hex, size_t *out_len);
+  char *sm3Hash(const unsigned char *message, size_t *out_len);
+  char *sm4EcbEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, size_t *out_len);
+  char *sm4EcbDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, size_t *out_len);
+  char *sm4CbcEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
+  char *sm4CbcDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
+  char *sm2Encrypt(const unsigned char *plain_text, const unsigned char *pub_hex, const int mode, size_t *out_len);
+  char *sm2Decrypt(const unsigned char *cipher_hex, const unsigned char *pri_hex, const int mode, size_t *out_len);
+  char *sm2EncryptAsn1(const unsigned char *plain_text, const unsigned char *pub_hex, size_t *out_len);
+  char *sm2DecryptAsn1(const unsigned char *cipher_hex, const unsigned char *pri_hex, size_t *out_len);
+  char *sm2Signature(const unsigned char *message, const unsigned char *pri_hex, size_t *out_len);
   bool sm2VerifySign(const unsigned char *message, const unsigned char *sign_hex, const unsigned char *pub_hex);
 }
 
@@ -524,7 +523,7 @@ clean_up:
   return error_code;
 }
 
-unsigned char *sm3Hash(const unsigned char *msg, size_t *out_len)
+char *sm3Hash(const unsigned char *msg, size_t *out_len)
 {
   SM3_CTX sm3_ctx;
   int SM3_BYTES = 32;
@@ -536,12 +535,12 @@ unsigned char *sm3Hash(const unsigned char *msg, size_t *out_len)
   sm3_update(&sm3_ctx, message, strlen(message));
   sm3_final(sm3sum, &sm3_ctx);
 
-  unsigned char *result = (unsigned char *)to_hex(sm3sum, SM3_BYTES);
+  char *result = to_hex(sm3sum, SM3_BYTES);
   *out_len = 2 * (SM3_BYTES);
   return result;
 }
 
-unsigned char *sm4EcbEncrypt(const unsigned char *ptext, const unsigned char *khex, size_t *out_len)
+char *sm4EcbEncrypt(const unsigned char *ptext, const unsigned char *khex, size_t *out_len)
 {
 
   char *plain_text = (char *)ptext;
@@ -561,7 +560,7 @@ unsigned char *sm4EcbEncrypt(const unsigned char *ptext, const unsigned char *kh
   EVP_EncryptUpdate(ctx, cipher_text, &cipher_len, (unsigned char *)plain_text, strlen(plain_text));
   EVP_EncryptFinal_ex(ctx, cipher_text + cipher_len, &final_len);
 
-  unsigned char *result = (unsigned char *)to_hex(cipher_text, cipher_len + final_len);
+  char *result = to_hex(cipher_text, cipher_len + final_len);
   *out_len = 2 * (cipher_len + final_len);
   EVP_CIPHER_CTX_free(ctx);
 
@@ -570,7 +569,7 @@ unsigned char *sm4EcbEncrypt(const unsigned char *ptext, const unsigned char *kh
   return result;
 }
 
-unsigned char *sm4CbcEncrypt(const unsigned char *ptext, const unsigned char *khex, const unsigned char *ihex, size_t *out_len)
+char *sm4CbcEncrypt(const unsigned char *ptext, const unsigned char *khex, const unsigned char *ihex, size_t *out_len)
 {
 
   char *plain_text = (char *)ptext;
@@ -596,7 +595,7 @@ unsigned char *sm4CbcEncrypt(const unsigned char *ptext, const unsigned char *kh
   EVP_EncryptUpdate(ctx, cipher_text, &cipher_len, (unsigned char *)plain_text, strlen(plain_text));
   EVP_EncryptFinal_ex(ctx, cipher_text + cipher_len, &final_len);
 
-  unsigned char *result = (unsigned char *)to_hex(cipher_text, cipher_len + final_len);
+  char *result = to_hex(cipher_text, cipher_len + final_len);
   *out_len = 2 * (cipher_len + final_len);
   EVP_CIPHER_CTX_free(ctx);
 
@@ -607,7 +606,7 @@ unsigned char *sm4CbcEncrypt(const unsigned char *ptext, const unsigned char *kh
   return result;
 }
 
-unsigned char *sm2Encrypt(const unsigned char *ptext, const unsigned char *phex, const int mode, size_t *out_len)
+char *sm2Encrypt(const unsigned char *ptext, const unsigned char *phex, const int mode, size_t *out_len)
 {
   char *plain_text = (char *)ptext;
   char *pub_hex = (char *)phex;
@@ -616,7 +615,7 @@ unsigned char *sm2Encrypt(const unsigned char *ptext, const unsigned char *phex,
 
   long key_len;
   unsigned char *pub_key = OPENSSL_hexstr2buf(pub_hex, &key_len);
-  unsigned char *result = NULL;
+  char *result = NULL;
   if (key_len == 0)
   {
     result = NULL;
@@ -629,7 +628,7 @@ unsigned char *sm2Encrypt(const unsigned char *ptext, const unsigned char *phex,
     *out_len = 0;
     goto toEnd;
   }
-  result = (unsigned char *)to_hex(cipher_text, strlen(plain_text) + 97);
+  result = to_hex(cipher_text, strlen(plain_text) + 97);
   *out_len = 2 * (strlen(plain_text) + 97);
   goto toEnd;
 
@@ -640,7 +639,7 @@ toEnd:
   return result;
 }
 
-unsigned char *sm2Decrypt(const unsigned char *chex, const unsigned char *phex, const int mode, size_t *out_len)
+char *sm2Decrypt(const unsigned char *chex, const unsigned char *phex, const int mode, size_t *out_len)
 {
   char *cipher_hex = (char *)chex;
   char *pri_hex = (char *)phex;
@@ -678,10 +677,10 @@ unsigned char *sm2Decrypt(const unsigned char *chex, const unsigned char *phex, 
 toEnd:
   free(cipher_text);
   free(pri_key);
-  return result;
+  return (char *)result;
 }
 
-unsigned char *sm4CbcDecrypt(const unsigned char *chex, const unsigned char *khex, const unsigned char *ihex, size_t *out_len)
+char *sm4CbcDecrypt(const unsigned char *chex, const unsigned char *khex, const unsigned char *ihex, size_t *out_len)
 {
   char *cipher_hex = (char *)chex;
   char *key_hex = (char *)khex;
@@ -715,10 +714,10 @@ unsigned char *sm4CbcDecrypt(const unsigned char *chex, const unsigned char *khe
   free(key);
   free(iv);
   free(cipher_text);
-  return plain_text;
+  return (char *)plain_text;
 }
 
-unsigned char *sm4EcbDecrypt(const unsigned char *chex, const unsigned char *khex, size_t *out_len)
+char *sm4EcbDecrypt(const unsigned char *chex, const unsigned char *khex, size_t *out_len)
 {
   char *cipher_hex = (char *)chex;
   char *key_hex = (char *)khex;
@@ -748,10 +747,10 @@ unsigned char *sm4EcbDecrypt(const unsigned char *chex, const unsigned char *khe
   free(key);
   free(cipher_text);
 
-  return plain_text;
+  return (char *)plain_text;
 }
 
-unsigned char *sm2EncryptAsn1(const unsigned char *ptext, const unsigned char *phex, size_t *out_len)
+char *sm2EncryptAsn1(const unsigned char *ptext, const unsigned char *phex, size_t *out_len)
 {
   char *plain_text = (char *)ptext;
   char *pub_hex = (char *)phex;
@@ -801,7 +800,7 @@ toEnd:
     EVP_PKEY_free(evp_key);
   if (evpMdCtx)
     EVP_MD_CTX_free(evpMdCtx);
-  unsigned char *result = (unsigned char *)to_hex((unsigned char *)cipher_text, cipher_len);
+  char *result = to_hex((unsigned char *)cipher_text, cipher_len);
   *out_len = 2 * cipher_len;
 
   free(cipher_text);
@@ -809,11 +808,10 @@ toEnd:
   return result;
 }
 
-unsigned char *sm2DecryptAsn1(const unsigned char *chex, const unsigned char *phex, size_t *out_len)
+char *sm2DecryptAsn1(const unsigned char *chex, const unsigned char *phex, size_t *out_len)
 {
   char *cipher_hex = (char *)chex;
   char *pri_hex = (char *)phex;
-
   long cipher_len;
   unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
 
@@ -863,10 +861,10 @@ toEnd:
   *out_len = plain_len;
   free(cipher_text);
   free(plain_text);
-  return plain_text;
+  return (char *)plain_text;
 }
 
-unsigned char *sm2Signature(const unsigned char *msg, const unsigned char *phex, size_t *out_len)
+char *sm2Signature(const unsigned char *msg, const unsigned char *phex, size_t *out_len)
 {
   char *message = (char *)msg;
   char *pri_hex = (char *)phex;
@@ -919,7 +917,7 @@ unsigned char *sm2Signature(const unsigned char *msg, const unsigned char *phex,
   goto toEnd;
 
 toEnd:
-  unsigned char *result = (unsigned char *)to_hex((unsigned char *)sign, sign_len);
+  char *result = to_hex((unsigned char *)sign, sign_len);
 
   if (ec_key)
     EC_KEY_free(ec_key);

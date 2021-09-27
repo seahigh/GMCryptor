@@ -12,58 +12,58 @@ func main() {
 }
 
 //export sm3Hash
-func sm3Hash(data *C.char) *C.char {
-	return C.CString(cryptor.SM3Hash(C.GoString(data)))
+func sm3Hash(message *C.char) *C.char {
+	return C.CString(cryptor.SM3Hash(C.GoString(message)))
 }
 
 //export sm2Encrypt
-func sm2Encrypt(data *C.char, publicKey *C.char, mode C.int) *C.char {
-	return C.CString(cryptor.SM2Encrypt(C.GoString(data), C.GoString(publicKey), int(mode)))
+func sm2Encrypt(plainText *C.char, publicKey *C.char, mode C.int) *C.char {
+	return C.CString(cryptor.SM2Encrypt(C.GoString(plainText), C.GoString(publicKey), int(mode)))
 }
 
 //export sm2Decrypt
-func sm2Decrypt(encData *C.char, privateKey *C.char, mode C.int) *C.char {
-	return C.CString(cryptor.SM2Decrypt(C.GoString(encData), C.GoString(privateKey), int(mode)))
+func sm2Decrypt(cipherHex *C.char, privateKey *C.char, mode C.int) *C.char {
+	return C.CString(cryptor.SM2Decrypt(C.GoString(cipherHex), C.GoString(privateKey), int(mode)))
 }
 
 //export sm2EncryptAsn1
-func sm2EncryptAsn1(data *C.char, publicKey *C.char) *C.char {
-	return C.CString(cryptor.SM2EncryptAsn1(C.GoString(data), C.GoString(publicKey)))
+func sm2EncryptAsn1(plainText *C.char, publicKey *C.char) *C.char {
+	return C.CString(cryptor.SM2EncryptAsn1(C.GoString(plainText), C.GoString(publicKey)))
 }
 
 //export sm2DecryptAsn1
-func sm2DecryptAsn1(encData *C.char, privateKey *C.char) *C.char {
-	return C.CString(cryptor.SM2DecryptAsn1(C.GoString(encData), C.GoString(privateKey)))
+func sm2DecryptAsn1(cipherHex *C.char, privateKey *C.char) *C.char {
+	return C.CString(cryptor.SM2DecryptAsn1(C.GoString(cipherHex), C.GoString(privateKey)))
 }
 
 //export sm4EcbEncrypt
-func sm4EcbEncrypt(data *C.char, sm4Key *C.char) *C.char {
-	return C.CString(cryptor.SM4EcbEncrypt(C.GoString(data), C.GoString(sm4Key)))
+func sm4EcbEncrypt(plainText *C.char, sm4Key *C.char) *C.char {
+	return C.CString(cryptor.SM4EcbEncrypt(C.GoString(plainText), C.GoString(sm4Key)))
 }
 
 //export sm4EcbDecrypt
-func sm4EcbDecrypt(encData *C.char, sm4Key *C.char) *C.char {
-	return C.CString(cryptor.SM4EcbDecrypt(C.GoString(encData), C.GoString(sm4Key)))
+func sm4EcbDecrypt(cipherHex *C.char, secretKey *C.char) *C.char {
+	return C.CString(cryptor.SM4EcbDecrypt(C.GoString(cipherHex), C.GoString(secretKey)))
 }
 
 //export sm4CbcEncrypt
-func sm4CbcEncrypt(data *C.char, sm4Key *C.char, sm4Iv *C.char) *C.char {
-	return C.CString(cryptor.SM4CbcEncrypt(C.GoString(data), C.GoString(sm4Key), C.GoString(sm4Iv)))
+func sm4CbcEncrypt(plainText *C.char, secretKey *C.char, ivHex *C.char) *C.char {
+	return C.CString(cryptor.SM4CbcEncrypt(C.GoString(plainText), C.GoString(secretKey), C.GoString(ivHex)))
 }
 
 //export sm4CbcDecrypt
-func sm4CbcDecrypt(encData *C.char, sm4Key *C.char, sm4Iv *C.char) *C.char {
-	return C.CString(cryptor.SM4CbcDecrypt(C.GoString(encData), C.GoString(sm4Key), C.GoString(sm4Iv)))
+func sm4CbcDecrypt(cipherHex *C.char, secretKey *C.char, ivHex *C.char) *C.char {
+	return C.CString(cryptor.SM4CbcDecrypt(C.GoString(cipherHex), C.GoString(secretKey), C.GoString(ivHex)))
 }
 
 //export sm2Signature
-func sm2Signature(data *C.char, privateKey *C.char) *C.char {
-	return C.CString(cryptor.SM2Signature(C.GoString(data), C.GoString(privateKey)))
+func sm2Signature(message *C.char, privateKey *C.char) *C.char {
+	return C.CString(cryptor.SM2Signature(C.GoString(message), C.GoString(privateKey)))
 }
 
 //export sm2VerifySign
-func sm2VerifySign(data *C.char, signData *C.char, publicKey *C.char) C.bool {
-	return C.bool(cryptor.SM2VerifySign(C.GoString(data), C.GoString(signData), C.GoString(publicKey)))
+func sm2VerifySign(message *C.char, signHex *C.char, publicKey *C.char) C.bool {
+	return C.bool(cryptor.SM2VerifySign(C.GoString(message), C.GoString(signHex), C.GoString(publicKey)))
 }
 
 //export cipherUnmarshal

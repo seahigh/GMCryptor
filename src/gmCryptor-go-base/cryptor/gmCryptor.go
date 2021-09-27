@@ -11,12 +11,6 @@ import (
 	"github.com/tjfoc/gmsm/sm4"
 )
 
-// brew install mingw-w64
-// brew tap messense/macos-cross-toolchains
-// brew install x86_64-unknown-linux-gnu
-// brew install aarch64-unknown-linux-gnu
-// brew install zstd
-
 func SM2Encrypt(plainText string, publicKey string, mode int) string {
 	cipherHex := ""
 	plainTextBytes := []byte(plainText)

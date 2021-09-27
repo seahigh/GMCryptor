@@ -15,17 +15,17 @@ end
 
 local C = ffi.load("../release/gmCryptor-c-libs/"..libName.."."..libType)
 
-ffi.cdef [[
-    unsigned char *sm3Hash(const unsigned char *message, size_t *out_len);
-    unsigned char *sm4EcbEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, size_t *out_len);
-    unsigned char *sm4EcbDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, size_t *out_len);
-    unsigned char *sm4CbcEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
-    unsigned char *sm4CbcDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
-    unsigned char *sm2Encrypt(const unsigned char *plain_text, const unsigned char *pub_hex, const int mode, size_t *out_len);
-    unsigned char *sm2Decrypt(const unsigned char *cipher_hex, const unsigned char *pri_hex, const int mode, size_t *out_len);
-    unsigned char *sm2EncryptAsn1(const unsigned char *plain_text, const unsigned char *pub_hex, size_t *out_len);
-    unsigned char *sm2DecryptAsn1(const unsigned char *cipher_hex, const unsigned char *pri_hex, size_t *out_len);
-    unsigned char *sm2Signature(const unsigned char *message, const unsigned char *pri_hex, size_t *out_len);
+ffi.cdef [[  
+    char *sm3Hash(const unsigned char *message, size_t *out_len);
+    char *sm4EcbEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, size_t *out_len);
+    char *sm4EcbDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, size_t *out_len);
+    char *sm4CbcEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
+    char *sm4CbcDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, const unsigned char *iv_hex, size_t *out_len);
+    char *sm2Encrypt(const unsigned char *plain_text, const unsigned char *pub_hex, const int mode, size_t *out_len);
+    char *sm2Decrypt(const unsigned char *cipher_hex, const unsigned char *pri_hex, const int mode, size_t *out_len);
+    char *sm2EncryptAsn1(const unsigned char *plain_text, const unsigned char *pub_hex, size_t *out_len);
+    char *sm2DecryptAsn1(const unsigned char *cipher_hex, const unsigned char *pri_hex, size_t *out_len);
+    char *sm2Signature(const unsigned char *message, const unsigned char *pri_hex, size_t *out_len);
     bool sm2VerifySign(const unsigned char *message, const unsigned char *sign_hex, const unsigned char *pub_hex);
 ]]
 

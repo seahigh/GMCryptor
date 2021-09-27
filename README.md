@@ -3,20 +3,6 @@
 
 **基于GO、C/OpenSSL、Rust，搬运、修正、实现国密常用算法**
 
-**供Web、NodeJS、Python、JAVA、Lua(Openresty)调用、iOS/Andriod调用**
+###### `SM3 Hash、SM4 [ECB]、SM4 [CBC]、SM2 [C1C3C2]、SM2 [C1C2C3]、SM2 [Asn1]、SM2 Sign、SM2 Verify`
 
-- SM3 Hash
-
-- SM4 [ECB]
-
-- SM4 [CBC]
-
-- SM2 [C1C3C2]
-
-- SM2 [C1C2C3]
-
-- SM2 [Asn1]
-
-- SM2 Sign
-
-- SM2 Verify
+**供Web H5、NodeJS、Python、JAVA、Lua(Openresty)调用、iOS/Andriod调用，各端加解密对齐**

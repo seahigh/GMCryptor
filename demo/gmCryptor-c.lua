@@ -12,6 +12,11 @@ if jit.os == 'OSX' then
     libName = libName .. '-darwin-x64'  
   end
 end
+if jit.os == 'Linux' then
+  libType = 'so'
+  libName = libName .. '-linux-x64'
+end
+
 
 local C = ffi.load("../release/gmCryptor-c-libs/"..libName.."."..libType)
 

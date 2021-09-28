@@ -1,6 +1,6 @@
 package.path = package.path .. ';../lua/?.lua'
 
---格式化补齐文字打印显示，没什么实质用途
+-- 格式化补齐文字打印显示，没什么实质用途
 function string.count(str)
     local tmpStr = str
     local _, sum = string.gsub(str, "[^\128-\193]", "")

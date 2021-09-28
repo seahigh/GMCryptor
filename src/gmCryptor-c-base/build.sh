@@ -1,3 +1,4 @@
 clang -arch x86_64 -shared -fPIC -o ../../release/gmCryptor-c-libs/gmCryptor-c-darwin-x64.dylib gmCryptor-clib.cc libcrypto-darwin-x64.a -I ./include &&
-clang -arch arm64 -shared -fPIC -o ../../release/gmCryptor-c-libs/gmCryptor-c-darwin-arm64.dylib gmCryptor-clib.cc libcrypto-darwin-arm64.a -I ./include
-
+clang -arch arm64 -shared -fPIC -o ../../release/gmCryptor-c-libs/gmCryptor-c-darwin-arm64.dylib gmCryptor-clib.cc libcrypto-darwin-arm64.a -I ./include &&
+x86_64-unknown-linux-gnu-gcc -shared -fPIC -o ../../release/gmCryptor-c-libs/gmCryptor-c-linux-x64.so gmCryptor-clib.cc libcrypto-linux-x64.a -I ./include -lpthread &&
+x86_64-w64-mingw32-gcc -shared -fPIC -o ../../release/gmCryptor-c-libs/gmCryptor-c-windows-x64.dll gmCryptor-clib.cc libcrypto-windows-x64.a -I ./include -lws2_32

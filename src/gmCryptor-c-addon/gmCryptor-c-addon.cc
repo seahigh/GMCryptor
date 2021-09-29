@@ -1,10 +1,17 @@
+#include <node.h>
+#include <nan.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
-#include <openssl/bn.h>
 #include <openssl/modes.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+
+using v8::Boolean;
+using v8::FunctionCallbackInfo;
+using v8::Isolate;
+using v8::Local;
+using v8::NewStringType;
+using v8::Object;
+using v8::String;
+using v8::Value;
 
 #define CERTVRIFY_SM2_ID "1234567812345678"
 #define CERTVRIFY_SM2_ID_LEN sizeof(CERTVRIFY_SM2_ID) - 1
@@ -13,19 +20,7 @@
 
 extern "C"
 {
-
 #include <crypto/sm3.h>
-  char *sm3Hash(const unsigned char *message);
-  char *sm4EcbEncrypt(const unsigned char *plain_text, const unsigned char *key_hex);
-  char *sm4EcbDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex);
-  char *sm4CbcEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, const unsigned char *iv_hex);
-  char *sm4CbcDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, const unsigned char *iv_hex);
-  char *sm2Encrypt(const unsigned char *plain_text, const unsigned char *pub_hex, const int mode);
-  char *sm2Decrypt(const unsigned char *cipher_hex, const unsigned char *pri_hex, const int mode);
-  char *sm2EncryptAsn1(const unsigned char *plain_text, const unsigned char *pub_hex);
-  char *sm2DecryptAsn1(const unsigned char *cipher_hex, const unsigned char *pri_hex);
-  char *sm2Signature(const unsigned char *message, const unsigned char *pri_hex);
-  bool sm2VerifySign(const unsigned char *message, const unsigned char *sign_hex, const unsigned char *pub_hex);
 }
 
 static char *to_hex(const void *_s, size_t l)
@@ -41,6 +36,126 @@ static char *to_hex(const void *_s, size_t l)
   }
   r[j] = '\0';
   return r;
+}
+
+void SM3HashMethod(const FunctionCallbackInfo<Value> &args)
+{
+  if (args.Length() != 1)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+  Nan::Utf8String msgString(args[0]);
+  char *message = (char *)malloc(msgString.length() + 1);
+  strcpy(message, *msgString);
+
+  SM3_CTX sm3_ctx;
+  int SM3_BYTES = 32;
+  unsigned char sm3sum[SM3_BYTES];
+  sm3_init(&sm3_ctx);
+  sm3_update(&sm3_ctx, message, strlen(message));
+  sm3_final(sm3sum, &sm3_ctx);
+
+  char *result = (char *)to_hex(sm3sum, SM3_BYTES);
+  args.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+  free(result);
+  delete message;
+}
+
+void SM4EcbEncryptMethod(const FunctionCallbackInfo<Value> &args)
+{
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+  Nan::Utf8String plainString(args[0]);
+  char *plain_text = (char *)malloc(plainString.length() + 1);
+  strcpy(plain_text, *plainString);
+
+  Nan::Utf8String keyString(args[1]);
+  char *key_hex = (char *)malloc(keyString.length() + 1);
+  strcpy(key_hex, *keyString);
+
+  long key_len;
+  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
+
+  unsigned char *cipher_text = NULL;
+  int cipher_len = strlen(plain_text) + EVP_MAX_BLOCK_LENGTH;
+
+  cipher_text = (unsigned char *)malloc(cipher_len);
+
+  int final_len = 0;
+  EVP_CIPHER_CTX *ctx;
+  ctx = EVP_CIPHER_CTX_new();
+  EVP_EncryptInit_ex(ctx, EVP_sm4_ecb(), NULL, key, NULL);
+  EVP_EncryptUpdate(ctx, cipher_text, &cipher_len, (unsigned char *)plain_text, strlen(plain_text));
+  EVP_EncryptFinal_ex(ctx, cipher_text + cipher_len, &final_len);
+
+  char *result = (char *)to_hex(cipher_text, cipher_len + final_len);
+
+  args.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+
+  EVP_CIPHER_CTX_free(ctx);
+  free(key);
+  free(result);
+  free(cipher_text);
+  delete plain_text;
+  delete key_hex;
+}
+
+void SM4CbcEncryptMethod(const FunctionCallbackInfo<Value> &args)
+{
+  if (args.Length() != 3)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+
+  Nan::Utf8String plainString(args[0]);
+  char *plain_text = (char *)malloc(plainString.length() + 1);
+  strcpy(plain_text, *plainString);
+
+  Nan::Utf8String keyString(args[1]);
+  char *key_hex = (char *)malloc(keyString.length() + 1);
+  strcpy(key_hex, *keyString);
+
+  Nan::Utf8String ivString(args[2]);
+  char *iv_hex = (char *)malloc(ivString.length() + 1);
+  strcpy(iv_hex, *ivString);
+
+  long key_len;
+  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
+
+  long iv_len;
+  unsigned char *iv = OPENSSL_hexstr2buf(iv_hex, &iv_len);
+
+  int cipher_len = strlen(plain_text) + EVP_MAX_BLOCK_LENGTH;
+  int final_len = 0;
+
+  unsigned char *cipher_text = NULL;
+
+  cipher_text = (unsigned char *)malloc(cipher_len);
+
+  EVP_CIPHER_CTX *ctx;
+  ctx = EVP_CIPHER_CTX_new();
+
+  EVP_EncryptInit_ex(ctx, EVP_sm4_cbc(), NULL, key, iv);
+  EVP_EncryptUpdate(ctx, cipher_text, &cipher_len, (unsigned char *)plain_text, strlen(plain_text));
+  EVP_EncryptFinal_ex(ctx, cipher_text + cipher_len, &final_len);
+
+  char *result = (char *)to_hex(cipher_text, cipher_len + final_len);
+
+  args.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+
+  EVP_CIPHER_CTX_free(ctx);
+  free(iv);
+  free(result);
+  free(key);
+  free(cipher_text);
+  delete plain_text;
+  delete key_hex;
+  delete iv_hex;
 }
 
 int sm2_encrypt_data(const unsigned char *plain_text, const int plain_len, const unsigned char *pub_key, unsigned char *cipher_text, const int type)
@@ -481,6 +596,7 @@ int sm2_decrypt_data(unsigned char *cipher_text, unsigned long cipher_len, const
     goto clean_up;
   }
   memcpy(plain_text, M, plain_len);
+
   error_code = 0;
 
 clean_up:
@@ -522,148 +638,23 @@ clean_up:
   return error_code;
 }
 
-char *sm3Hash(const unsigned char *msg)
+void SM2EncryptMethod(const FunctionCallbackInfo<Value> &args)
 {
-  SM3_CTX sm3_ctx;
-  int SM3_BYTES = 32;
-  unsigned char sm3sum[SM3_BYTES];
+  if (args.Length() != 3)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+  Nan::Utf8String plainString(args[0]);
+  char *plain_text = (char *)malloc(plainString.length() + 1);
+  strcpy(plain_text, *plainString);
 
-  char *message = (char *)msg;
-  sm3_init(&sm3_ctx);
-  sm3_update(&sm3_ctx, message, strlen(message));
-  sm3_final(sm3sum, &sm3_ctx);
-  char *result = to_hex(sm3sum, SM3_BYTES);
-  return result;
-}
+  Nan::Utf8String pubString(args[1]);
+  char *pub_hex = (char *)malloc(pubString.length() + 1);
+  strcpy(pub_hex, *pubString);
 
-char *sm4EcbEncrypt(const unsigned char *ptext, const unsigned char *khex)
-{
-  char *plain_text = (char *)ptext;
-  char *key_hex = (char *)khex;
-  long key_len;
-  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
+  unsigned char *cipher_text = (unsigned char *)malloc(strlen(plain_text) + 97 + 1);
 
-  int out_len = strlen(plain_text) + EVP_MAX_BLOCK_LENGTH;
-
-  unsigned char *cipher_text = (unsigned char *)malloc(out_len);
-
-  int final_len = 0;
-  EVP_CIPHER_CTX *ctx;
-  ctx = EVP_CIPHER_CTX_new();
-  EVP_EncryptInit_ex(ctx, EVP_sm4_ecb(), NULL, key, NULL);
-  EVP_EncryptUpdate(ctx, cipher_text, &out_len, (unsigned char *)plain_text, strlen(plain_text));
-  EVP_EncryptFinal_ex(ctx, cipher_text + out_len, &final_len);
-
-  char *result = to_hex(cipher_text, out_len + final_len);
-  EVP_CIPHER_CTX_free(ctx);
-
-  free(key);
-  free(cipher_text);
-  return result;
-}
-
-char *sm4CbcEncrypt(const unsigned char *ptext, const unsigned char *khex, const unsigned char *ihex)
-{
-  char *plain_text = (char *)ptext;
-  char *key_hex = (char *)khex;
-  char *iv_hex = (char *)ihex;
-  long key_len;
-  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
-
-  long iv_len;
-  unsigned char *iv = OPENSSL_hexstr2buf(iv_hex, &iv_len);
-
-  int out_len = strlen(plain_text) + EVP_MAX_BLOCK_LENGTH;
-  int final_len = 0;
-
-  unsigned char *cipher_text = (unsigned char *)malloc(out_len);
-
-  EVP_CIPHER_CTX *ctx;
-  ctx = EVP_CIPHER_CTX_new();
-
-  EVP_EncryptInit_ex(ctx, EVP_sm4_cbc(), NULL, key, iv);
-  EVP_EncryptUpdate(ctx, cipher_text, &out_len, (unsigned char *)plain_text, strlen(plain_text));
-  EVP_EncryptFinal_ex(ctx, cipher_text + out_len, &final_len);
-
-  char *result = to_hex(cipher_text, out_len + final_len);
-
-  EVP_CIPHER_CTX_free(ctx);
-  free(key);
-  free(iv);
-  free(cipher_text);
-  return result;
-}
-
-char *sm4CbcDecrypt(const unsigned char *chex, const unsigned char *khex, const unsigned char *ihex)
-{
-  char *cipher_hex = (char *)chex;
-  char *key_hex = (char *)khex;
-  char *iv_hex = (char *)ihex;
-
-  long cipher_len;
-  unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
-
-  long key_len;
-  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
-
-  long iv_len;
-  unsigned char *iv = OPENSSL_hexstr2buf(iv_hex, &iv_len);
-
-  int out_len = cipher_len + EVP_MAX_BLOCK_LENGTH;
-  unsigned char *plain_text = (unsigned char *)malloc(out_len);
-
-  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-
-  int final_len = 0;
-
-  EVP_DecryptInit_ex(ctx, EVP_sm4_cbc(), NULL, key, iv);
-  EVP_DecryptUpdate(ctx, plain_text, &out_len, cipher_text, cipher_len);
-  EVP_DecryptFinal_ex(ctx, plain_text + out_len, &final_len);
-  EVP_CIPHER_CTX_free(ctx);
-
-  plain_text[out_len + final_len] = '\0';
-
-  free(key);
-  free(iv);
-  free(cipher_text);
-  return (char *)plain_text;
-}
-
-char *sm4EcbDecrypt(const unsigned char *chex, const unsigned char *khex)
-{
-  char *cipher_hex = (char *)chex;
-  char *key_hex = (char *)khex;
-
-  long cipher_len;
-  unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
-
-  long key_len;
-  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
-
-  int out_len = cipher_len + EVP_MAX_BLOCK_LENGTH;
-
-  unsigned char *plain_text = (unsigned char *)malloc(out_len);
-
-  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-
-  int final_len = 0;
-
-  EVP_DecryptInit_ex(ctx, EVP_sm4_ecb(), NULL, key, NULL);
-  EVP_DecryptUpdate(ctx, plain_text, &out_len, cipher_text, cipher_len);
-  EVP_DecryptFinal_ex(ctx, plain_text + out_len, &final_len);
-  EVP_CIPHER_CTX_free(ctx);
-
-  plain_text[out_len + final_len] = '\0';
-  free(key);
-  free(cipher_text);
-  return (char *)plain_text;
-}
-
-char *sm2Encrypt(const unsigned char *ptext, const unsigned char *phex, const int mode)
-{
-  char *plain_text = (char *)ptext;
-  char *pub_hex = (char *)phex;
-  unsigned char *cipher_text = (unsigned char *)malloc(strlen(plain_text) + 97);
   long key_len;
   unsigned char *pub_key = OPENSSL_hexstr2buf(pub_hex, &key_len);
   char *result = NULL;
@@ -672,26 +663,46 @@ char *sm2Encrypt(const unsigned char *ptext, const unsigned char *phex, const in
     result = NULL;
     goto toEnd;
   }
-  if (sm2_encrypt_data((const unsigned char *)plain_text, strlen(plain_text), pub_key, cipher_text, mode) != 0)
+  if (sm2_encrypt_data((const unsigned char *)plain_text, strlen(plain_text), pub_key, cipher_text, Nan::To<int>(args[2]).FromJust()) != 0)
   {
     result = NULL;
     goto toEnd;
   }
-  result = to_hex(cipher_text, strlen(plain_text) + 97);
+  result = (char *)to_hex(cipher_text, strlen(plain_text) + 97);
   goto toEnd;
 
 toEnd:
-  free(cipher_text);
+  if (result == NULL)
+  {
+    args.GetReturnValue().Set(Nan::New<v8::String>("").ToLocalChecked());
+  }
+  else
+  {
+    args.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+  }
   free(pub_key);
-  return result;
+  free(cipher_text);
+  free(result);
+  delete plain_text;
+  delete pub_hex;
 }
 
-char *sm2Decrypt(const unsigned char *chex, const unsigned char *phex, const int mode)
+void SM2DecryptMethod(const FunctionCallbackInfo<Value> &args)
 {
-  char *cipher_hex = (char *)chex;
-  char *pri_hex = (char *)phex;
+  if (args.Length() != 3)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+  Nan::Utf8String cipherString(args[0]);
+  char *cipher_hex = (char *)malloc(cipherString.length() + 1);
+  strcpy(cipher_hex, *cipherString);
 
-  unsigned char *plain_text = NULL;
+  Nan::Utf8String priString(args[1]);
+  char *pri_hex = (char *)malloc(priString.length() + 1);
+  strcpy(pri_hex, *priString);
+
+  unsigned char *result = NULL;
 
   long cipher_len;
   unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
@@ -701,33 +712,53 @@ char *sm2Decrypt(const unsigned char *chex, const unsigned char *phex, const int
 
   if (key_len == 0)
   {
-    plain_text = NULL;
+    result = NULL;
     goto toEnd;
   }
   if (cipher_len == 0)
   {
-    plain_text = NULL;
+    result = NULL;
     goto toEnd;
   }
-  plain_text = (unsigned char *)malloc(cipher_len - 97);
-  if (sm2_decrypt_data(cipher_text, cipher_len, pri_key, plain_text, mode) != 0)
+  result = (unsigned char *)malloc(cipher_len - (65 + 32));
+  if (sm2_decrypt_data(cipher_text, cipher_len, pri_key, result, Nan::To<int>(args[2]).FromJust()) != 0)
   {
-    plain_text = NULL;
+    result = NULL;
     goto toEnd;
   }
-  plain_text[cipher_len - 97] = '\0';
   goto toEnd;
 
 toEnd:
-  free(cipher_text);
+  if (result == NULL)
+  {
+    args.GetReturnValue().Set(Nan::New<v8::String>("").ToLocalChecked());
+  }
+  else
+  {
+    args.GetReturnValue().Set(Nan::New((char *)result, cipher_len - (65 + 32)).ToLocalChecked());
+  }
   free(pri_key);
-  return (char *)plain_text;
+  free(cipher_text);
+  free(result);
+  delete cipher_hex;
+  delete pri_hex;
 }
 
-char *sm2EncryptAsn1(const unsigned char *ptext, const unsigned char *phex)
+void SM2EncryptAsn1Method(const FunctionCallbackInfo<Value> &args)
 {
-  char *plain_text = (char *)ptext;
-  char *pub_hex = (char *)phex;
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+
+  Nan::Utf8String plainString(args[0]);
+  char *plain_text = (char *)malloc(plainString.length() + 1);
+  strcpy(plain_text, *plainString);
+
+  Nan::Utf8String pubString(args[1]);
+  char *pub_hex = (char *)malloc(pubString.length() + 1);
+  strcpy(pub_hex, *pubString);
 
   size_t cipher_len = 0;
   unsigned char *cipher_text = NULL;
@@ -750,6 +781,7 @@ char *sm2EncryptAsn1(const unsigned char *ptext, const unsigned char *phex)
   {
     goto toEnd;
   }
+
   EVP_PKEY_set_alias_type(evp_key, EVP_PKEY_SM2);
   ectx = EVP_PKEY_CTX_new(evp_key, NULL);
 
@@ -773,15 +805,30 @@ toEnd:
     EVP_PKEY_free(evp_key);
   if (evpMdCtx)
     EVP_MD_CTX_free(evpMdCtx);
-  char *result = to_hex((unsigned char *)cipher_text, cipher_len);
+  char *result = (char *)to_hex((unsigned char *)cipher_text, cipher_len);
+  args.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+  free(result);
   free(cipher_text);
-  return result;
+  delete plain_text;
+  delete pub_hex;
 }
 
-char *sm2DecryptAsn1(const unsigned char *chex, const unsigned char *phex)
+void SM2DecryptAsn1Method(const FunctionCallbackInfo<Value> &args)
 {
-  char *cipher_hex = (char *)chex;
-  char *pri_hex = (char *)phex;
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+
+  Nan::Utf8String cipherString(args[0]);
+  char *cipher_hex = (char *)malloc(cipherString.length() + 1);
+  strcpy(cipher_hex, *cipherString);
+
+  Nan::Utf8String priString(args[1]);
+  char *pri_hex = (char *)malloc(priString.length() + 1);
+  strcpy(pri_hex, *priString);
+
   long cipher_len;
   unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
 
@@ -814,7 +861,6 @@ char *sm2DecryptAsn1(const unsigned char *chex, const unsigned char *phex)
 
   plain_text = (unsigned char *)malloc(plain_len);
   EVP_PKEY_decrypt(ectx, plain_text, &plain_len, cipher_text, cipher_len);
-  plain_text[plain_len] = '\0';
   goto toEnd;
 
 toEnd:
@@ -829,88 +875,32 @@ toEnd:
   if (prk)
     BN_free(prk);
 
+  args.GetReturnValue().Set(Nan::New((char *)plain_text, plain_len).ToLocalChecked());
+  free(plain_text);
   free(cipher_text);
-  return (char *)plain_text;
+  delete cipher_hex;
+  delete pri_hex;
 }
 
-char *sm2Signature(const unsigned char *msg, const unsigned char *phex)
+void SM2VerifySignMethod(const FunctionCallbackInfo<Value> &args)
 {
-  char *message = (char *)msg;
-  char *pri_hex = (char *)phex;
-
-  uint8_t sign[512];
-  size_t sign_len = sizeof(sign);
-
-  EC_KEY *ec_key = EC_KEY_new();
-  BIGNUM *pri_key = BN_new();
-  EVP_MD_CTX *evpMdCtx = EVP_MD_CTX_new();
-  EVP_PKEY_CTX *sctx = NULL;
-  BN_CTX *ctx = BN_CTX_new();
-  EVP_PKEY *evp_key = EVP_PKEY_new();
-
-  EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_sm2);
-  EC_KEY_set_group(ec_key, group);
-
-  EC_POINT *r = EC_POINT_new(group);
-
-  if (BN_hex2bn(&pri_key, pri_hex) == 0)
+  if (args.Length() != 3)
   {
-    sign_len = 0;
-    goto toEnd;
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
   }
-  if (EC_KEY_set_private_key(ec_key, pri_key) != 1)
-  {
-    sign_len = 0;
-    goto toEnd;
-  }
-  EC_POINT_mul(group, r, pri_key, NULL, NULL, ctx);
-  EC_KEY_set_public_key(ec_key, r);
 
-  if (EVP_PKEY_set1_EC_KEY(evp_key, ec_key) != 1)
-  {
-    sign_len = 0;
-    goto toEnd;
-  }
-  EVP_PKEY_set_alias_type(evp_key, EVP_PKEY_SM2);
+  Nan::Utf8String messageString(args[0]);
+  char *message = (char *)malloc(messageString.length() + 1);
+  strcpy(message, *messageString);
 
-  sctx = EVP_PKEY_CTX_new(evp_key, NULL);
+  Nan::Utf8String signString(args[1]);
+  char *sign_hex = (char *)malloc(signString.length() + 1);
+  strcpy(sign_hex, *signString);
 
-  EVP_PKEY_CTX_set1_id(sctx, CERTVRIFY_SM2_ID, CERTVRIFY_SM2_ID_LEN);
-
-  EVP_MD_CTX_set_pkey_ctx(evpMdCtx, sctx);
-
-  EVP_DigestSignInit(evpMdCtx, NULL, EVP_sm3(), NULL, evp_key);
-
-  EVP_DigestSign(evpMdCtx, sign, &sign_len, (unsigned char *)message, strlen(message));
-  goto toEnd;
-
-toEnd:
-  char *result = to_hex((unsigned char *)sign, sign_len);
-
-  if (ec_key)
-    EC_KEY_free(ec_key);
-  if (group)
-    EC_GROUP_free(group);
-  if (r)
-    EC_POINT_free(r);
-  if (sctx)
-    EVP_PKEY_CTX_free(sctx);
-  if (evpMdCtx)
-    EVP_MD_CTX_free(evpMdCtx);
-  if (evp_key)
-    EVP_PKEY_free(evp_key);
-  if (pri_key)
-    BN_free(pri_key);
-  if (ctx)
-    BN_CTX_free(ctx);
-  return result;
-}
-
-bool sm2VerifySign(const unsigned char *msg, const unsigned char *shex, const unsigned char *phex)
-{
-  char *message = (char *)msg;
-  char *pub_hex = (char *)phex;
-  char *sign_hex = (char *)shex;
+  Nan::Utf8String pubString(args[2]);
+  char *pub_hex = (char *)malloc(pubString.length() + 1);
+  strcpy(pub_hex, *pubString);
 
   bool verify_result = false;
 
@@ -971,5 +961,207 @@ toEnd:
     EVP_PKEY_free(evp_key);
   if (evpMdCtx)
     EVP_MD_CTX_free(evpMdCtx);
-  return verify_result;
+  args.GetReturnValue().Set(verify_result);
+  delete message;
+  delete sign_hex;
+  delete pub_hex;
 }
+
+void SM2SignatureMethod(const FunctionCallbackInfo<Value> &args)
+{
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+  Nan::Utf8String messageString(args[0]);
+  char *message = (char *)malloc(messageString.length() + 1);
+  strcpy(message, *messageString);
+
+  Nan::Utf8String priString(args[1]);
+  char *pri_hex = (char *)malloc(priString.length() + 1);
+  strcpy(pri_hex, *priString);
+
+  uint8_t sign[512];
+  size_t sign_len = sizeof(sign);
+
+  EC_KEY *ec_key = EC_KEY_new();
+  BIGNUM *pri_key = BN_new();
+  EVP_MD_CTX *evpMdCtx = EVP_MD_CTX_new();
+  EVP_PKEY_CTX *sctx = NULL;
+  BN_CTX *ctx = BN_CTX_new();
+  EVP_PKEY *evp_key = EVP_PKEY_new();
+
+  EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_sm2);
+  EC_KEY_set_group(ec_key, group);
+
+  EC_POINT *r = EC_POINT_new(group);
+
+  if (BN_hex2bn(&pri_key, pri_hex) == 0)
+  {
+    sign_len = 0;
+    goto toEnd;
+  }
+  if (EC_KEY_set_private_key(ec_key, pri_key) != 1)
+  {
+    sign_len = 0;
+    goto toEnd;
+  }
+
+  EC_POINT_mul(group, r, pri_key, NULL, NULL, ctx);
+  EC_KEY_set_public_key(ec_key, r);
+
+  if (EVP_PKEY_set1_EC_KEY(evp_key, ec_key) != 1)
+  {
+    sign_len = 0;
+    goto toEnd;
+  }
+  EVP_PKEY_set_alias_type(evp_key, EVP_PKEY_SM2);
+
+  sctx = EVP_PKEY_CTX_new(evp_key, NULL);
+
+  EVP_PKEY_CTX_set1_id(sctx, CERTVRIFY_SM2_ID, CERTVRIFY_SM2_ID_LEN);
+
+  EVP_MD_CTX_set_pkey_ctx(evpMdCtx, sctx);
+
+  EVP_DigestSignInit(evpMdCtx, NULL, EVP_sm3(), NULL, evp_key);
+
+  EVP_DigestSign(evpMdCtx, sign, &sign_len, (unsigned char *)message, strlen(message));
+  goto toEnd;
+
+toEnd:
+  char *result = (char *)to_hex((unsigned char *)sign, sign_len);
+  args.GetReturnValue().Set(Nan::New(result).ToLocalChecked());
+  free(result);
+  if (ec_key)
+    EC_KEY_free(ec_key);
+  if (group)
+    EC_GROUP_free(group);
+  if (r)
+    EC_POINT_free(r);
+  if (sctx)
+    EVP_PKEY_CTX_free(sctx);
+  if (evpMdCtx)
+    EVP_MD_CTX_free(evpMdCtx);
+  if (evp_key)
+    EVP_PKEY_free(evp_key);
+  if (pri_key)
+    BN_free(pri_key);
+  if (ctx)
+    BN_CTX_free(ctx);
+  delete message;
+  delete pri_hex;
+}
+
+void SM4EcbDecryptMethod(const FunctionCallbackInfo<Value> &args)
+{
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+  Nan::Utf8String cipherString(args[0]);
+  char *cipher_hex = (char *)malloc(cipherString.length() + 1);
+  strcpy(cipher_hex, *cipherString);
+
+  Nan::Utf8String keyString(args[1]);
+  char *key_hex = (char *)malloc(keyString.length() + 1);
+  strcpy(key_hex, *keyString);
+
+  long cipher_len;
+  unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
+
+  long key_len;
+  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
+
+  int out_len = cipher_len + EVP_MAX_BLOCK_LENGTH;
+
+  unsigned char *plain_text = (unsigned char *)malloc(out_len);
+
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+
+  int final_len = 0;
+
+  EVP_DecryptInit_ex(ctx, EVP_sm4_ecb(), NULL, key, NULL);
+  EVP_DecryptUpdate(ctx, plain_text, &out_len, cipher_text, cipher_len);
+  EVP_DecryptFinal_ex(ctx, plain_text + out_len, &final_len);
+  EVP_CIPHER_CTX_free(ctx);
+  plain_text[out_len + final_len] = '\0';
+  args.GetReturnValue().Set(Nan::New((char *)plain_text).ToLocalChecked());
+
+  free(key);
+  free(cipher_text);
+  free(plain_text);
+  delete cipher_hex;
+  delete key_hex;
+}
+
+void SM4CbcDecryptMethod(const FunctionCallbackInfo<Value> &args)
+{
+  if (args.Length() != 3)
+  {
+    Nan::ThrowTypeError("Wrong arguments");
+    return;
+  }
+
+  Nan::Utf8String cipherString(args[0]);
+  char *cipher_hex = (char *)malloc(cipherString.length() + 1);
+  strcpy(cipher_hex, *cipherString);
+
+  Nan::Utf8String keyString(args[1]);
+  char *key_hex = (char *)malloc(keyString.length() + 1);
+  strcpy(key_hex, *keyString);
+
+  Nan::Utf8String ivString(args[2]);
+  char *iv_hex = (char *)malloc(ivString.length() + 1);
+  strcpy(iv_hex, *ivString);
+
+  long cipher_len;
+  unsigned char *cipher_text = OPENSSL_hexstr2buf(cipher_hex, &cipher_len);
+
+  long key_len;
+  unsigned char *key = OPENSSL_hexstr2buf(key_hex, &key_len);
+
+  long iv_len;
+  unsigned char *iv = OPENSSL_hexstr2buf(iv_hex, &iv_len);
+
+  int out_len = cipher_len + EVP_MAX_BLOCK_LENGTH;
+
+  unsigned char *plain_text = (unsigned char *)malloc(out_len);
+
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+
+  int final_len = 0;
+
+  EVP_DecryptInit_ex(ctx, EVP_sm4_cbc(), NULL, key, iv);
+  EVP_DecryptUpdate(ctx, plain_text, &out_len, cipher_text, cipher_len);
+  EVP_DecryptFinal_ex(ctx, plain_text + out_len, &final_len);
+  EVP_CIPHER_CTX_free(ctx);
+  plain_text[out_len + final_len] = '\0';
+  args.GetReturnValue().Set(Nan::New((char *)plain_text).ToLocalChecked());
+
+  free(cipher_text);
+  free(iv);
+  free(key);
+  free(plain_text);
+  delete key_hex;
+  delete cipher_hex;
+  delete iv_hex;
+}
+
+void Init(Local<Object> exports)
+{
+  NODE_SET_METHOD(exports, "sm3Hash", SM3HashMethod);
+  NODE_SET_METHOD(exports, "sm4EcbEncrypt", SM4EcbEncryptMethod);
+  NODE_SET_METHOD(exports, "sm4CbcEncrypt", SM4CbcEncryptMethod);
+  NODE_SET_METHOD(exports, "sm2VerifySign", SM2VerifySignMethod);
+  NODE_SET_METHOD(exports, "sm2Signature", SM2SignatureMethod);
+  NODE_SET_METHOD(exports, "sm2EncryptAsn1", SM2EncryptAsn1Method);
+  NODE_SET_METHOD(exports, "sm2DecryptAsn1", SM2DecryptAsn1Method);
+  NODE_SET_METHOD(exports, "sm2Encrypt", SM2EncryptMethod);
+  NODE_SET_METHOD(exports, "sm2Decrypt", SM2DecryptMethod);
+  NODE_SET_METHOD(exports, "sm4EcbDecrypt", SM4EcbDecryptMethod);
+  NODE_SET_METHOD(exports, "sm4CbcDecrypt", SM4CbcDecryptMethod);
+}
+
+NODE_MODULE(GMCryptorCAddon, Init)

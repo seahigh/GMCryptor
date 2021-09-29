@@ -43,7 +43,7 @@ local priStr = "ac615b172f8bbc223de2f631d9c803e9a9b6dea9df81b1330d02fd9a874b44cf
 local sm4KeyStr = "996ce17f6abc9fe126b57aa5f1d8c92c"
 local sm4IvStr = "504f1a1f80d40c760c74bd5257124dc9"
 
-local N = 10000
+local N = 100000
 
 --2选1，API一致，不可同时用
 print(string.format("C OPENSSL测试"..N.."次================================================="));

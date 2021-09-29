@@ -1,18 +1,17 @@
-
 var sm2 = require('sm-crypto').sm2;
 var sm3 = require('sm-crypto').sm3;
 var sm4 = require('sm-crypto').sm4;
 var crypto = require('crypto');
 var ffi = require('ffi-napi');
 var os = require('os');
- 
+
 var rustCryptorWasm = require('../release/gmCryptor-rust-wasm/.')
 var rustCryptorAddon = require('../release/gmCryptor-rust-addon/.')
 var goCryptorAddon = require('../release/gmCryptor-go-addon/.')
 var cCryptorAddon = require('../release/gmCryptor-c-addon/.')
 var wasm = require('./wasm_exec.js')
 
-var count = 1;
+var count = 100000;
 
 var keypair = sm2.generateKeyPairHex();
 var sm2PublicKey = keypair.publicKey;
@@ -145,7 +144,7 @@ var sm4Enc = doFn('SM4[CBC]加密', sm4.encrypt, testString, sm4_md5_key, { mode
 doFn('SM4[CBC]解密', sm4.decrypt, sm4Enc, sm4_md5_key, { mode: 'cbc', iv: sm4_md5_iv });
 var sm2Enc = doFn('SM2[C1C3C2]加密', sm2.doEncrypt, testString, sm2PublicKey, 1);
 doFn('SM2[C1C3C2]解密', sm2.doDecrypt, sm2Enc, sm2PrivateKey, 1);
-var sm2Enc = doFn('SM2[C1C2C3]加密', sm2.doEncrypt, testString, sm2PublicKey, 0) 
+var sm2Enc = doFn('SM2[C1C2C3]加密', sm2.doEncrypt, testString, sm2PublicKey, 0)
 doFn('SM2[C1C2C3]解密', sm2.doDecrypt, sm2Enc, sm2PrivateKey, 0);
 var sm2Sign = doFn('SM2加签', sm2.doSignature, testString, sm2PrivateKey, {
   der: true,
@@ -222,17 +221,30 @@ doFn('SM4[CBC]解密', cryptoSM4CbcDecrypt, sm4Enc, sm4_md5_key, sm4_md5_iv);
 var cCryptorWasm = require('../release/gmCryptor-c-wasm/.')
 cCryptorWasm.onRuntimeInitialized = () => {
   console.log("C-WASM 测试" + count + "次=================================================");
-  cCryptorWasm.sm3Hash = cCryptorWasm.cwrap('sm3Hash', 'string', ['string']);
-  cCryptorWasm.sm4EcbEncrypt = cCryptorWasm.cwrap('sm4EcbEncrypt', 'string', ['string', 'string']);
-  cCryptorWasm.sm4CbcEncrypt = cCryptorWasm.cwrap('sm4CbcEncrypt', 'string', ['string', 'string', 'string']);
-  cCryptorWasm.sm4EcbDecrypt = cCryptorWasm.cwrap('sm4EcbDecrypt', 'string', ['string', 'string']);
-  cCryptorWasm.sm4CbcDecrypt = cCryptorWasm.cwrap('sm4CbcDecrypt', 'string', ['string', 'string', 'string']);
-  cCryptorWasm.sm2Signature = cCryptorWasm.cwrap('sm2Signature', 'string', ['string', 'string']);
+  cCryptorWasm.sm3Hash = cCryptorWasm.cwrap('_sm3Hash', 'string', ['string']);
+  cCryptorWasm.sm4EcbEncrypt = cCryptorWasm.cwrap('_sm4EcbEncrypt', 'string', ['string', 'string']);
+  cCryptorWasm.sm4CbcEncrypt = cCryptorWasm.cwrap('_sm4CbcEncrypt', 'string', ['string', 'string', 'string']);
+  cCryptorWasm.sm4EcbDecrypt = cCryptorWasm.cwrap('_sm4EcbDecrypt', 'string', ['string', 'string']);
+  cCryptorWasm.sm4CbcDecrypt = cCryptorWasm.cwrap('_sm4CbcDecrypt', 'string', ['string', 'string', 'string']);
+  cCryptorWasm.sm2Encrypt = cCryptorWasm.cwrap('_sm2Encrypt', 'string', ['string', 'string', 'int']);
+  cCryptorWasm.sm2Decrypt = cCryptorWasm.cwrap('_sm2Decrypt', 'string', ['string', 'string', 'int']);
+  cCryptorWasm.sm2Signature = cCryptorWasm.cwrap('_sm2Signature', 'string', ['string', 'string', 'string']);
+  cCryptorWasm.sm2VerifySign = cCryptorWasm.cwrap('_sm2VerifySign', 'boolean', ['string', 'string', 'string']);
+  cCryptorWasm.sm2EncryptAsn1 = cCryptorWasm.cwrap('_sm2EncryptAsn1', 'string', ['string', 'string']);
+  cCryptorWasm.sm2DecryptAsn1 = cCryptorWasm.cwrap('_sm2DecryptAsn1', 'string', ['string', 'string']);
   doFn('SM3摘要', cCryptorWasm.sm3Hash, testString)
   var sm4Enc = doFn('SM4[ECB]加密', cCryptorWasm.sm4EcbEncrypt, testString, sm4_md5_key)
   doFn('SM4[ECB]解密', cCryptorWasm.sm4EcbDecrypt, sm4Enc, sm4_md5_key)
   var sm4Enc = doFn('SM4[CBC]加密', cCryptorWasm.sm4CbcEncrypt, testString, sm4_md5_key, sm4_md5_iv)
   doFn('SM4[CBC]解密', cCryptorWasm.sm4CbcDecrypt, sm4Enc, sm4_md5_key, sm4_md5_iv)
+  var sm2EncAsn1 = doFn('SM2[Asn1]加密', cCryptorWasm.sm2EncryptAsn1, testString, sm2PublicKey)
+  doFn('SM2[Asn1]解密', cCryptorWasm.sm2DecryptAsn1, sm2EncAsn1, sm2PrivateKey)
+  var sm2Enc = doFn('SM2[C1C3C2]加密', cCryptorWasm.sm2Encrypt, testString, sm2PublicKey, 0)
+  doFn('SM2[C1C3C2]解密', cCryptorWasm.sm2Decrypt, sm2Enc, sm2PrivateKey, 0)
+  var sm2Enc = doFn('SM2[C1C2C3]加密', cCryptorWasm.sm2Encrypt, testString, sm2PublicKey, 1)
+  doFn('SM2[C1C2C3]解密', cCryptorWasm.sm2Decrypt, sm2Enc, sm2PrivateKey, 1)
+  var sm2Sign = doFn('SM2加签', cCryptorWasm.sm2Signature, testString, sm2PrivateKey)
+  doFn('SM2验签', cCryptorWasm.sm2VerifySign, testString, sm2Sign, sm2PublicKey)
 }
 
 function doMemoryTest(type) {
@@ -261,7 +273,11 @@ function doMemoryTest(type) {
     myFN = cCryptorAddon;
     name = 'C-ADDON 测试'
   }
-  for (let index = 0; index <= 1000000; index++) {
+  if (type == 6) {
+    myFN = cCryptorWasm;
+    name = 'C-WASM 测试'
+  }
+  for (let index = 0; index <= 100000; index++) {
     myFN.sm3Hash(testString)
     var sm2Enc = myFN.sm2Encrypt(testString, sm2PublicKey, 1)
     myFN.sm2Decrypt(sm2Enc, sm2PrivateKey, 1)
@@ -281,4 +297,3 @@ function doMemoryTest(type) {
     }
   }
 }
-// doMemoryTest(5)

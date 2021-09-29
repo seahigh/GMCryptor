@@ -1,0 +1,11 @@
+char *sm3Hash(const unsigned char *message);
+char *sm4EcbEncrypt(const unsigned char *plain_text, const unsigned char *key_hex);
+char *sm4EcbDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex);
+char *sm4CbcEncrypt(const unsigned char *plain_text, const unsigned char *key_hex, const unsigned char *iv_hex);
+char *sm4CbcDecrypt(const unsigned char *cipher_hex, const unsigned char *key_hex, const unsigned char *iv_hex);
+char *sm2Encrypt(const unsigned char *plain_text, const unsigned char *pub_hex, const int mode);
+char *sm2Decrypt(const unsigned char *cipher_hex, const unsigned char *pri_hex, const int mode);
+char *sm2EncryptAsn1(const unsigned char *plain_text, const unsigned char *pub_hex);
+char *sm2DecryptAsn1(const unsigned char *cipher_hex, const unsigned char *pri_hex);
+char *sm2Signature(const unsigned char *message, const unsigned char *pri_hex);
+bool sm2VerifySign(const unsigned char *message, const unsigned char *sign_hex, const unsigned char *pub_hex);

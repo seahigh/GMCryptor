@@ -5,19 +5,23 @@ local ffi_str = ffi.string
 local libName = 'gmCryptor-go'
 local libType = 'dylib'
 if jit.os == 'OSX' then
-  libType = 'dylib'
-  if jit.arch == 'arm64' then
-    libName = libName .. '-darwin-arm64'
-  else
-    libName = libName .. '-darwin-x64'  
-  end
+    libType = 'dylib'
+    if jit.arch == 'arm64' then
+        libName = libName .. '-darwin-arm64'
+    else
+        libName = libName .. '-darwin-x64'
+    end
 end
 if jit.os == 'Linux' then
     libType = 'so'
     libName = libName .. '-linux-x64'
- end
+end
+if jit.os == 'Windows' then
+    libType = 'dll'
+    libName = libName .. '-windows-x64'
+end
 
-local C = ffi.load("../release/gmCryptor-go-libs/"..libName.."."..libType)
+local C = ffi.load("../release/gmCryptor-go-libs/" .. libName .. "." .. libType)
 
 ffi.cdef [[  
     extern char* sm3Hash(char* data);
@@ -51,7 +55,7 @@ function _M.sm4EcbEncrypt(s, k)
     ffi.copy(data, s)
     local key = ffi.new("char[?]", #k + 1)
     ffi.copy(key, k)
-    local out = C.sm4EcbEncrypt(data,key)
+    local out = C.sm4EcbEncrypt(data, key)
     return ffi_str(out)
 end
 
@@ -62,7 +66,7 @@ function _M.sm4EcbDecrypt(s, k)
     ffi.copy(data, s)
     local key = ffi.new("char[?]", #k + 1)
     ffi.copy(key, k)
-    local out = C.sm4EcbDecrypt(data,key)
+    local out = C.sm4EcbDecrypt(data, key)
     return ffi_str(out)
 end
 
@@ -76,7 +80,7 @@ function _M.sm4CbcEncrypt(s, k, i)
     ffi.copy(key, k)
     local iv = ffi.new("char[?]", #i + 1)
     ffi.copy(iv, i)
-    local out = C.sm4CbcEncrypt(data,key,iv)
+    local out = C.sm4CbcEncrypt(data, key, iv)
     return ffi_str(out)
 end
 
@@ -90,7 +94,7 @@ function _M.sm4CbcDecrypt(s, k, i)
     ffi.copy(key, k)
     local iv = ffi.new("char[?]", #i + 1)
     ffi.copy(iv, i)
-    local out = C.sm4CbcDecrypt(data,key,iv)
+    local out = C.sm4CbcDecrypt(data, key, iv)
     return ffi_str(out)
 end
 
@@ -102,7 +106,7 @@ function _M.sm2Encrypt(s, k, m)
     ffi.copy(data, s)
     local key = ffi.new("char[?]", #k + 1)
     ffi.copy(key, k)
-    local out = C.sm2Encrypt(data,key,m)
+    local out = C.sm2Encrypt(data, key, m)
     return ffi_str(out)
 end
 
@@ -114,7 +118,7 @@ function _M.sm2Decrypt(s, k, m)
     ffi.copy(data, s)
     local key = ffi.new("char[?]", #k + 1)
     ffi.copy(key, k)
-    local out = C.sm2Decrypt(data,key,m)
+    local out = C.sm2Decrypt(data, key, m)
     return ffi_str(out)
 end
 
@@ -125,7 +129,7 @@ function _M.sm2EncryptAsn1(s, k)
     ffi.copy(data, s)
     local key = ffi.new("char[?]", #k + 1)
     ffi.copy(key, k)
-    local out = C.sm2EncryptAsn1(data,key)
+    local out = C.sm2EncryptAsn1(data, key)
     return ffi_str(out)
 end
 
@@ -136,7 +140,7 @@ function _M.sm2DecryptAsn1(s, k)
     ffi.copy(data, s)
     local key = ffi.new("char[?]", #k + 1)
     ffi.copy(key, k)
-    local out = C.sm2DecryptAsn1(data,key)
+    local out = C.sm2DecryptAsn1(data, key)
     return ffi_str(out)
 end
 
@@ -144,10 +148,10 @@ function _M.sm2Signature(s, k)
     if not s then return nil end
     if not k then return nil end
     local data = ffi.new("char[?]", #s + 1)
-    ffi.copy(data, s) 
+    ffi.copy(data, s)
     local pri = ffi.new("char[?]", #k + 1)
     ffi.copy(pri, k)
-    local out = C.sm2Signature(data,pri)
+    local out = C.sm2Signature(data, pri)
     return ffi_str(out)
 end
 
@@ -161,7 +165,7 @@ function _M.sm2VerifySign(s, k, d)
     ffi.copy(sign, k)
     local pub = ffi.new("char[?]", #d + 1)
     ffi.copy(pub, d)
-    local out = C.sm2VerifySign(data,sign,pub)
+    local out = C.sm2VerifySign(data, sign, pub)
     return out
 end
 

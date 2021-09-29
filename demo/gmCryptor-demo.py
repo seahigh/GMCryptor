@@ -66,78 +66,68 @@ gmGo.sm2VerifySign.restype = c_bool
 sm2Verify= gmGo.sm2VerifySign(c_char_p(testString.encode("utf-8")),c_char_p(sm2Sign.encode("utf-8")),c_char_p(pubStr.encode("utf-8")))
 print("SM2加签",sm2Verify)
 
+ 
+
 print("=================================================C OENSSL测试=================================================")
-gmOpenssl = cdll.LoadLibrary('../release/gmCryptor-c-libs/gmCryptor-c-'+libName)
+gmOpenSSL = cdll.LoadLibrary('../release/gmCryptor-c-libs/gmCryptor-c-'+libName)
 
-gmOpenssl.sm3Hash.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm3Hash(c_char_p(testString.encode("utf-8")),outbuflen)
-print("SM3摘要",outbuf[:outbuflen.contents.value].decode("utf-8"))
+# gmOpenssl.sm3Hash.restype = c_char_p
+# outbuflen = pointer(c_size_t(0))
+# outbuf = gmOpenssl.sm3Hash(c_char_p(testString.encode("utf-8")),outbuflen)
+# print("SM3摘要",outbuf[:outbuflen.contents.value].decode("utf-8"))
 
-gmOpenssl.sm4EcbEncrypt.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm4EcbEncrypt(c_char_p(testString.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8")),outbuflen)
-ecbCipherHex = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm3Hash.restype = c_char_p
+print("SM3摘要",gmOpenSSL.sm3Hash(c_char_p(testString.encode("utf-8"))).decode("utf-8"))
+
+gmOpenSSL.sm4EcbEncrypt.restype = c_char_p
+ecbCipherHex = gmOpenSSL.sm4EcbEncrypt(c_char_p(testString.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8"))).decode("utf-8")
 print("SM4[ECB]加密",ecbCipherHex)
 
-gmOpenssl.sm4EcbDecrypt.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm4EcbDecrypt(c_char_p(ecbCipherHex.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8")),outbuflen)
-ecbPlainText = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm4EcbDecrypt.restype = c_char_p
+
+ecbPlainText = gmOpenSSL.sm4EcbDecrypt(c_char_p(ecbCipherHex.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8"))).decode("utf-8")
 print("SM4[ECB]解密",ecbPlainText)
 
-gmOpenssl.sm4CbcEncrypt.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm4CbcEncrypt(c_char_p(testString.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8")),c_char_p(sm4IvStr.encode("utf-8")),outbuflen)
-cbcCipherHex = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm4CbcEncrypt.restype = c_char_p
+cbcCipherHex = gmOpenSSL.sm4CbcEncrypt(c_char_p(testString.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8")),c_char_p(sm4IvStr.encode("utf-8"))).decode("utf-8")
 print("SM4[CBC]加密",cbcCipherHex)
 
-gmOpenssl.sm4CbcDecrypt.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm4CbcDecrypt(c_char_p(cbcCipherHex.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8")),c_char_p(sm4IvStr.encode("utf-8")),outbuflen)
-cbcPlainText = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm4CbcDecrypt.restype = c_char_p
+
+cbcPlainText = gmOpenSSL.sm4CbcDecrypt(c_char_p(cbcCipherHex.encode("utf-8")),c_char_p(sm4KeyStr.encode("utf-8")),c_char_p(sm4IvStr.encode("utf-8"))).decode("utf-8")
 print("SM4[CBC]解密",cbcPlainText)
 
-gmOpenssl.sm2Encrypt.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2Encrypt(c_char_p(testString.encode("utf-8")),c_char_p(pubStr.encode("utf-8")),0,outbuflen)
-sm2CipherHex1 = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm2Encrypt.restype = c_char_p
+sm2CipherHex1 = gmOpenSSL.sm2Encrypt(c_char_p(testString.encode("utf-8")),c_char_p(pubStr.encode("utf-8")),0).decode("utf-8")
 print("SM2[C1C3C2]加密",sm2CipherHex1)
 
-gmOpenssl.sm2Decrypt.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2Decrypt(c_char_p(sm2CipherHex1.encode("utf-8")),c_char_p(priStr.encode("utf-8")),0,outbuflen)
-sm2PlainText1 = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm2Decrypt.restype = c_char_p
+# for num in range (1,100): 
+sm2PlainText1 = gmOpenSSL.sm2Decrypt(c_char_p(sm2CipherHex1.encode("utf-8")),c_char_p(priStr.encode("utf-8")),0).decode("utf-8")
 print("SM2[C1C3C2]解密",sm2PlainText1)
 
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2Encrypt(c_char_p(testString.encode("utf-8")),c_char_p(pubStr.encode("utf-8")),1,outbuflen)
-sm2CipherHex2 = outbuf[:outbuflen.contents.value].decode("utf-8")
+sm2CipherHex2 = gmOpenSSL.sm2Encrypt(c_char_p(testString.encode("utf-8")),c_char_p(pubStr.encode("utf-8")),1).decode("utf-8")
 print("SM2[C1C2C3]加密",sm2CipherHex2)
 
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2Decrypt(c_char_p(sm2CipherHex2.encode("utf-8")),c_char_p(priStr.encode("utf-8")),1,outbuflen)
-sm2PlainText2 = outbuf[:outbuflen.contents.value].decode("utf-8")
+ 
+sm2PlainText2 = gmOpenSSL.sm2Decrypt(c_char_p(sm2CipherHex2.encode("utf-8")),c_char_p(priStr.encode("utf-8")),1).decode("utf-8")
 print("SM2[C1C2C3]解密",sm2PlainText2)
 
-gmOpenssl.sm2EncryptAsn1.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2EncryptAsn1(c_char_p(testString.encode("utf-8")),c_char_p(pubStr.encode("utf-8")),outbuflen)
-sm2Asn1CipherHex = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm2EncryptAsn1.restype = c_char_p
+sm2Asn1CipherHex = gmOpenSSL.sm2EncryptAsn1(c_char_p(testString.encode("utf-8")),c_char_p(pubStr.encode("utf-8"))).decode("utf-8")
 print("SM2[Asn1]加密",sm2Asn1CipherHex)
 
-gmOpenssl.sm2DecryptAsn1.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2DecryptAsn1(c_char_p(sm2Asn1CipherHex.encode("utf-8")),c_char_p(priStr.encode("utf-8")),outbuflen)
-sm2Asn1PlainText = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm2DecryptAsn1.restype = c_char_p
+ 
+sm2Asn1PlainText = gmOpenSSL.sm2DecryptAsn1(c_char_p(sm2Asn1CipherHex.encode("utf-8")),c_char_p(priStr.encode("utf-8"))).decode("utf-8")
 print("SM2[Asn1]解密",sm2Asn1PlainText)
 
-gmOpenssl.sm2Signature.restype = c_char_p
-outbuflen = pointer(c_size_t(0))
-outbuf = gmOpenssl.sm2Signature(c_char_p(testString.encode("utf-8")),c_char_p(priStr.encode("utf-8")),outbuflen)
-sm2Sign = outbuf[:outbuflen.contents.value].decode("utf-8")
+gmOpenSSL.sm2Signature.restype = c_char_p
+sm2Sign = gmOpenSSL.sm2Signature(c_char_p(testString.encode("utf-8")),c_char_p(priStr.encode("utf-8"))).decode("utf-8")
 print("SM2加签",sm2Sign)
 
-gmOpenssl.sm2VerifySign.restype = c_bool
-sm2Verify = gmOpenssl.sm2VerifySign(c_char_p(testString.encode("utf-8")),c_char_p(sm2Sign.encode("utf-8")),c_char_p(pubStr.encode("utf-8")))
+gmOpenSSL.sm2VerifySign.restype = c_bool
+sm2Verify= gmOpenSSL.sm2VerifySign(c_char_p(testString.encode("utf-8")),c_char_p(sm2Sign.encode("utf-8")),c_char_p(pubStr.encode("utf-8")))
 print("SM2加签",sm2Verify)
+
+ 
